@@ -1,13 +1,8 @@
 #!/usr/bin/python3
 """This is the file storage class for AirBnB"""
 import json
+import models
 from models.base_model import BaseModel
-from models.user import User
-from models.state import State
-from models.city import City
-from models.amenity import Amenity
-from models.place import Place
-from models.review import Review
 
 
 class FileStorage:
@@ -20,12 +15,23 @@ class FileStorage:
     __file_path = "file.json"
     __objects = {}
 
-    def all(self):
+    def close(self):
+        """Reloads the file"""
+        self.reload()
+
+    def all(self, cls=None):
         """returns a dictionary
+        Args:
+            cls (Type[BaseModel]): class to return instances of
         Return:
             returns a dictionary of __object
         """
-        return self.__objects
+        if cls is None:
+            return self.__objects
+        return {
+            key: obj for key, obj in self.__objects.items()
+            if key.partition('.')[0] == cls.__name__
+        }
 
     def new(self, obj):
         """sets __object to given obj
@@ -45,13 +51,25 @@ class FileStorage:
         with open(self.__file_path, 'w', encoding="UTF-8") as f:
             json.dump(my_dict, f)
 
+    def delete(self, obj=None):
+        """delete an object from storage if it exists
+
+        Args:
+            obj (BaseModel): object to delete
+        """
+        if obj is None:
+            return
+        key = type(obj).__name__ + '.' + obj.id
+        if key in self.__objects:
+            del self.__objects[key]
+
     def reload(self):
         """serialize the file path to JSON file path
         """
         try:
             with open(self.__file_path, 'r', encoding="UTF-8") as f:
                 for key, value in (json.load(f)).items():
-                    value = eval(value["__class__"])(**value)
+                    value = models.classes[value["__class__"]](**value)
                     self.__objects[key] = value
         except FileNotFoundError:
             pass
