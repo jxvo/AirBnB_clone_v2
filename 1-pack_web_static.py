@@ -1,4 +1,3 @@
-
 #!/usr/bin/python3
 """module that packs entire web static in tar .tgz format"""
 
